@@ -15,6 +15,16 @@ import router from './router'
 import '@/icons' // icon
 import '@/permission' // permission control
 
+//引入请求函数
+import * as API from '@/api'
+
+//全局组件
+import CategorySelector from "@/components/CategorySelector"
+import HintButton from "@/components/HintButton"
+Vue.component('CategorySelector',CategorySelector)
+Vue.component('HintButton',HintButton)
+
+
 /**
  * If you don't want to use mock-server
  * you want to use MockJs for mock api
@@ -34,10 +44,14 @@ Vue.use(ElementUI, { locale })
 // Vue.use(ElementUI)
 
 Vue.config.productionTip = false
-
+Vue.prototype.$API = API
 new Vue({
+  // beforeCreate(){
+  //   Vue.prototype.$API = API
+  // },
   el: '#app',
   router,
   store,
   render: h => h(App)
 })
+
