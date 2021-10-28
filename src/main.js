@@ -18,6 +18,9 @@ import '@/permission' // permission control
 //引入请求函数
 import * as API from '@/api'
 
+//引入v-charts等相关配置
+import '@/plugins/vcharts'
+
 //全局组件
 import CategorySelector from "@/components/CategorySelector"
 import HintButton from "@/components/HintButton"

@@ -51,10 +51,62 @@ export const constantRoutes = [
       path: 'dashboard',
       name: 'Dashboard',
       component: () => import('@/views/dashboard/index'),
-      meta: { title: 'Dashboard', icon: 'dashboard' }
+      meta: { title: '主页', icon: 'dashboard' }
     }]
   },
 
+]
+
+//存储所有权限相关的路由
+export const allAsyncRoutes =[
+  //权限数据管理相关的路由
+  {
+    name: 'Acl',
+    path: '/acl',
+    component: Layout,
+    redirect: '/acl/user/list',
+    meta: {
+      title: '权限管理',
+      icon: 'el-icon-lock'
+    },
+    children: [
+      {
+        name: 'User',
+        path: 'user/list',
+        component: () => import('@/views/acl/user/list'),
+        meta: {
+          title: '用户管理',
+        },
+      },
+      {
+        name: 'Role',
+        path: 'role/list',
+        component: () => import('@/views/acl/role/list'),
+        meta: {
+          title: '角色管理',
+        },
+      },
+      {
+        name: 'RoleAuth',
+        path: 'role/auth/:id',
+        component: () => import('@/views/acl/role/roleAuth'),
+        meta: {
+          activeMenu: '/acl/role/list',
+          title: '角色授权',
+        },
+        hidden: true,
+      },
+      {
+        name: 'Permission',
+        path: 'permission/list',
+        component: () => import('@/views/acl/permission/list'),
+        meta: {
+          title: '菜单管理',
+        },
+      },
+    ]
+  },
+  //配置商品管理相关的路由
   {
     path:'/product',
     component:Layout,
@@ -72,7 +124,7 @@ export const constantRoutes = [
         path:'/product/sku/list',
         name:'Sku',
         component:()=>import('@/views/product/sku/List'),
-        meta: { title: 'SKU管理' }
+        meta: { title: 'Sku管理' }
       },
       {
         path:'/product/spu/list',
@@ -85,17 +137,24 @@ export const constantRoutes = [
         name:'Trademart',
         component:()=>import('@/views/product/trademark/List'),
         meta: { title: '品牌管理' }
+      },
+      {
+        path:'/product/category/list',
+        name:'Category',
+        component:()=>import('@/views/product/category/List'),
+        meta: { title: '分类管理' }
       }
     ]
   },
-
-
-  // 404 page must be placed at the end !!!
-  { path: '*', redirect: '/404', hidden: true }
 ]
+
+//所有都可以使用的路由
+// 404 page must be placed at the end !!!
+export const anyRoute = { path: '*', redirect: '/404', hidden: true }
 
 const createRouter = () => new Router({
   // mode: 'history', // require service support
+  mode:'history',
   scrollBehavior: () => ({ y: 0 }),
   routes: constantRoutes
 })

@@ -1,13 +1,35 @@
-import { login, logout, getInfo } from '@/api/user'
+import { login, logout, getInfo } from '@/api/acl/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
-import { resetRouter } from '@/router'
+import { resetRouter,constantRoutes,allAsyncRoutes,anyRoute } from '@/router'
+import router from '@/router'
+import { cloneDeep } from 'lodash'
 
 const getDefaultState = () => {
   return {
     token: getToken(),
-    name: '',
-    avatar: ''
+    name: '',//存储用户名称信息
+    avatar: '',//存储用户头像信息
+
+    buttons:[],//和按钮权限相关数据
+    roles:[],//和用户角色相关数据
+    routes:[],//存储所有的路由对象，不是字符串
+    asyncRoutes:[],//存储所有用户相关的异步存储的路由对象（不同用户的路由对象不一致），不是字符串
   }
+}
+
+//用于过滤出自身权限相关的路由对象,routeNames在用户本身的routes中
+const filterMyAsyncRoutes = function(allAsyncRoutes,routeNames){
+  const myAsyncRoutes = allAsyncRoutes.filter(item =>{
+    if(routeNames.indexOf(item.name)!==-1){//如果存在这个路由
+      //判断是否有子路由
+      if(item.children && item.children.length){//子路由存在且不为零
+        //进行递归判断,将二级路由改为符合条件的二级路由
+        item.children = filterMyAsyncRoutes(item.children,routeNames)
+      }
+      return true
+    }
+  })
+  return myAsyncRoutes
 }
 
 const state = getDefaultState()
@@ -19,11 +41,23 @@ const mutations = {
   SET_TOKEN: (state, token) => {
     state.token = token
   },
-  SET_NAME: (state, name) => {
-    state.name = name
+  // SET_NAME: (state, name) => {
+  //   state.name = name
+  // },
+  // SET_AVATAR: (state, avatar) => {
+  //   state.avatar = avatar
+  // }
+  SET_USERINFO(state,userInfo){
+    state.name = userInfo.name
+    state.avatar = userInfo.avatar
+    state.buttons = userInfo.buttons
+    state.roles = userInfo.roles
   },
-  SET_AVATAR: (state, avatar) => {
-    state.avatar = avatar
+  SET_ROUTES(state,myAsyncRoutes){
+    state.asyncRoutes = myAsyncRoutes
+    state.routes = constantRoutes.concat(myAsyncRoutes,anyRoute)
+    //动态添加路由
+    router.addRoutes([...myAsyncRoutes,anyRoute])
   }
 }
 
@@ -53,10 +87,14 @@ const actions = {
           return reject('Verification failed, please Login again.')
         }
 
-        const { name, avatar } = data
+        // const { name, avatar } = data
 
-        commit('SET_NAME', name)
-        commit('SET_AVATAR', avatar)
+        // commit('SET_NAME', name)
+        // commit('SET_AVATAR', avatar)
+        //存储用户信息相关
+        commit('SET_USERINFO',data)
+        //存储路由相关
+        commit('SET_ROUTES',filterMyAsyncRoutes(cloneDeep(allAsyncRoutes),data.routes))
         resolve(data)
       }).catch(error => {
         reject(error)

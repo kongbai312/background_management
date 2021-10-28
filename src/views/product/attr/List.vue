@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card>
-      <CategorySelector @changeCategory="changeCategory"></CategorySelector>
+      <CategorySelector @changeCategory="changeCategory" :isShowList="isShowList"></CategorySelector>
     </el-card>
     <el-card style="margin-top:20px;">
       <div v-show="isShowList">
@@ -33,7 +33,9 @@
             width="150">
             <template slot-scope="{row,$index}">
               <HintButton icon="el-icon-edit" title="修改属性" size="mini" type="warning" @click="showUpdateDiv(row)"></HintButton>
-              <HintButton icon="el-icon-delete" title="删除属性" size="mini" type="danger"></HintButton>
+              <el-popconfirm :title="`您确定要删除属性：${row.attrName} 吗`" @onConfirm="deleteAttr(row)">
+                <HintButton slot="reference" icon="el-icon-delete" title="删除属性" size="mini" type="danger"></HintButton>
+              </el-popconfirm>
             </template>
           </el-table-column>
         </el-table>
@@ -73,14 +75,14 @@
             label="操作"
             width="width">
             <template slot-scope="{row,$index}">
-              <el-popconfirm title="这是一段内容确定删除吗？" @onConfirm="attrForm.attrValueList.splice($index,1)">
+              <el-popconfirm :title="`您确定要删除属性值：${row.valueName} 吗`" @onConfirm="attrForm.attrValueList.splice($index,1)">
                 <HintButton slot="reference" icon="el-icon-delete" title="删除" size="mini" type="danger"></HintButton>
               </el-popconfirm>
             </template>
           </el-table-column>
         </el-table>
 
-        <el-button type="primary">保存</el-button>
+        <el-button type="primary" @click="save" :disabled="attrForm.attrValueList.length===0">保存</el-button>
         <el-button @click="isShowList = true">取消</el-button>
       </div>
     </el-card>
@@ -167,6 +169,10 @@ export default {
         "valueName": "",
         "isEdit":true
       })
+      //获取焦点
+      this.$nextTick(() => {
+        this.$refs[this.attrForm.attrValueList.length - 1].focus()
+      })
     },
 
     //点击修改按钮，实现修改属性
@@ -217,12 +223,59 @@ export default {
       row.isEdit = true
       //获取焦点
       // this.$refs[index].focus();//这样子获取数据太早，提取不到，得用$nextTick
-
       this.$nextTick( () => {
         this.$refs[index].focus()
-
       })
+    },
+
+    //点击保存按钮相关
+    async save(){
+      //收集数据
+      let attr = this.attrForm
+      // 属性值名称如果为空串，从属性值列表当中去除
+			// 属性值当中去除isEdit属性
+      attr.attrValueList = attr.attrValueList.filter(item =>{
+        if(item.valueName!==''){//如果不为空串，则收集
+          delete item.isEdit
+          return true
+        }
+      })
+      //属性值列表如果没有属性值，不发请求
+      if(attr.attrValueList.length ===0){
+        this.$message.info('属性的属性值为空，无法保存')
+        return
+      }
+
+      try {
+        //发送请求，进行添加或者修改
+        await this.$API.attr.addOrUpdate(attr)
+        //成功提示
+        this.$message.success('添加或修改成功')
+        //返回属性值列表
+        this.isShowList = true
+        //重新发送请求获取数据
+        this.getAttrList()
+      } catch (error) {
+        this.$message.error('添加或修改失败')
+      }
+    },
+
+    //删除属性
+    async deleteAttr(row){
+      try {
+        //发送请求删除数据
+        await this.$API.attr.delete(row.id)
+        //成功删除提示
+        this.$message.success('删除属性成功')
+        //重新发送请求获取数据
+        this.getAttrList()
+      } catch (error) {
+        this.$message.error('删除属性失败')
+      }
+
     }
+
+
   },
 }
 </script>
